@@ -402,6 +402,6 @@ class EXAMPLES():
 
 try:
     test = EXAMPLES()
-    test.test_loop()
+    test.chaining_test()
 finally:
     test.shutdown()
