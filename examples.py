@@ -402,6 +402,6 @@ class EXAMPLES():
 
 try:
     test = EXAMPLES()
-    test.resize_and_fillvalue_test()
+    test.test_loop()
 finally:
     test.shutdown()

@@ -249,3 +249,9 @@ With `auto_forward` or `forward_to`, CANVA_THREAD can pass its rendered data up 
 - Print `SPACE` (with lock!) to inspect canvas states
 - Enable `host_ref_canvas` renders for placement debugging
 - Use `time.sleep()` in test loops to slow things down
+
+
+## Few images from the tests included
+
+![image1](./images/image.png)
+![image2](./images/image2.png)
