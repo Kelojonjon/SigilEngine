@@ -1,0 +1,14 @@
+Custom Hobby License
+
+This is a hobby project, shared freely for learning, experimentation, and creative use.
+
+You are free to:
+- Use, modify, and distribute this code in non-commercial projects.
+- Fork the project and build on it.
+
+You are NOT allowed to:
+- Sell the unmodified code or any trivially modified versions as a commercial product.
+
+No warranties are provided. Use at your own risk.
+
+For questions or permissions beyond this, please contact the author.
