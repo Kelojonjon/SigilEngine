@@ -8,6 +8,10 @@ The architechture is built in a way that should allow, easy expansion, and addin
 
 Chaining, and global registry allow for flexible queueing of commands, and rendering of different canvases.
 
+Individual cells host their own metadata, this allows creating fun stuff like game of life, only by sending packets and reading the buffers, while the internals themselves stay untouched.
+
+Some of the feartures like "visible" metadata, are in the code, but dont yet do anything.
+
 Future plans (depending on motivation of the hobbyist :D):
 
 - Sockets and servers for fully async usage and rendering
@@ -15,6 +19,7 @@ Future plans (depending on motivation of the hobbyist :D):
 - Scrollable canvases (although this could already be done manually via origin, or content handling)
 - Proper logging
 - Styling options
+- Handle visibility, and possibly "writable" metadata for individual cells
 
 Feel free to contribute & fork
 
@@ -28,7 +33,7 @@ This engine is built for fun, creativity, and hacking systems together — while
 
 ## 🌌 Core Components
 
-- **CANVA_THREAD** - Active canvas thread with its own queue, state, and loop
+- **CANVA_THREAD** - Active canvas thread with its own queue, state, and loop. All cells on the grid can host various metadata making the cells more than just a simple characters.
 - **PACKET_CREATOR** - Helper to build ready-to-send command packets
 - **ASCII_SCREEN** - Reusable tools for grid rendering and manipulation
 - **SPACE** - Global registry of active canvases, dimensions, and queues
@@ -91,7 +96,7 @@ shutdown()
 |Command|Description|
 |---|---|
 |`write`|Local write|
-|`auto_forward`|Local write + forward to host|
+|`auto_forward`|Local write + forward until no hosts left|
 |`resize`|Change canvas size|
 |`set_origin`|Reposition on host|
 |`set_host`|Change host canvas|
@@ -109,7 +114,7 @@ shutdown()
 
 **auto_forward**
 
-- Writes locally, then forwards automatically to the host
+- Writes locally, then forwards automatically to the next host
 - Enables chaining small canvases into a final buffer
 
 **resize**
@@ -119,7 +124,7 @@ shutdown()
 **set_origin**
 
 - Updates canvas origin on host, regenerates chart, refreshes host reference
-- Does NOT auto-write to host
+- Does NOT auto-write canvas content to host.
 
 **set_host**
 
