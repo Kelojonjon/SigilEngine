@@ -13,6 +13,8 @@ Future plans (depending on motivation of the hobbyist :D):
 - Sockets and servers for fully async usage and rendering
 - Input handling
 - Scrollable canvases (although this could already be done manually via origin, or content handling)
+- Proper logging
+- Styling options
 
 Feel free to contribute & fork
 
