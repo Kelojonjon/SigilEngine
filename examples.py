@@ -52,6 +52,8 @@ class EXAMPLES():
         self.t3 = CANVA_THREAD("canvas3", "main", 4, 10, host="canvas1", origin_yx=(1, 1))
         self.t4 = CANVA_THREAD("canvas4", "main", 7, 50, host="canvas1", origin_yx=(1, 1))
         self.t5 = CANVA_THREAD("canvas5", "main", 3, 20, host="canvas4", origin_yx=(1, 1))
+        # Some extra tests :D
+        self.t6 = CANVA_THREAD("game_of_life", "main", 15, 70, host="canvas1", origin_yx=(1,1))
         
         # Wrap in real threading.Thread runners, target the CANVA_THREAD run function
         self.thread1 = threading.Thread(target=self.t1.run)
@@ -59,6 +61,7 @@ class EXAMPLES():
         self.thread3 = threading.Thread(target=self.t3.run)
         self.thread4 = threading.Thread(target=self.t4.run)
         self.thread5 = threading.Thread(target=self.t5.run)
+        self.thread6 = threading.Thread(target=self.t6.run)
 
         # Start the threads
         self.thread1.start()
@@ -66,6 +69,7 @@ class EXAMPLES():
         self.thread3.start()
         self.thread4.start()
         self.thread5.start()
+        self.thread6.start()
         
         # Packet creator, init with the desired content width
         # For manual \n wrapping be sure to set it wide enough for your canvas
@@ -74,6 +78,9 @@ class EXAMPLES():
         print("All up and running!")
         time.sleep(1)
     
+    
+    def game_of_life(self):
+        pass
 
 
     def test_loop(self):
@@ -389,9 +396,10 @@ class EXAMPLES():
         self.t3.alive = False
         self.t4.alive = False
         self.t5.alive = False
- 
+        self.t6.alive = False
+        
         # Wait for the threads to exit
-        self.threads = [self.thread1, self.thread2, self.thread3, self.thread4, self.thread5]
+        self.threads = [self.thread1, self.thread2, self.thread3, self.thread4, self.thread5, self.thread6]
         for thread in self.threads:
             if thread != None:
                 thread.join()
