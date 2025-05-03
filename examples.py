@@ -52,8 +52,9 @@ class EXAMPLES():
         self.t3 = CANVA_THREAD("canvas3", "main", 4, 10, host="canvas1", origin_yx=(1, 1))
         self.t4 = CANVA_THREAD("canvas4", "main", 7, 50, host="canvas1", origin_yx=(1, 1))
         self.t5 = CANVA_THREAD("canvas5", "main", 3, 20, host="canvas4", origin_yx=(1, 1))
-        # Some extra tests :D
-        self.t6 = CANVA_THREAD("game_of_life", "main", 15, 70, host="canvas1", origin_yx=(1,1))
+        # Game of life canvases
+        self.t6 = CANVA_THREAD("game_of_life", "main", 50, 120)
+        self.t7 = CANVA_THREAD("meteor", "main", 7, 7, host="game_of_life", origin_yx=(4,10) )
         
         # Wrap in real threading.Thread runners, target the CANVA_THREAD run function
         self.thread1 = threading.Thread(target=self.t1.run)
@@ -62,6 +63,7 @@ class EXAMPLES():
         self.thread4 = threading.Thread(target=self.t4.run)
         self.thread5 = threading.Thread(target=self.t5.run)
         self.thread6 = threading.Thread(target=self.t6.run)
+        self.thread7 = threading.Thread(target=self.t7.run)
 
         # Start the threads
         self.thread1.start()
@@ -70,6 +72,7 @@ class EXAMPLES():
         self.thread4.start()
         self.thread5.start()
         self.thread6.start()
+        self.thread7.start()
         
         # Packet creator, init with the desired content width
         # For manual \n wrapping be sure to set it wide enough for your canvas
@@ -80,7 +83,97 @@ class EXAMPLES():
     
     
     def game_of_life(self):
-        pass
+        """
+        Game of life hosted on a canvas.
+        If the canvas is too wide it will render weirdly, so make it smaller in the __init__ of the class.
+        """
+        self.packet_boi.set_content_origin((1,1))
+        # A meteorite "sprite" that will be striking the automatas randomly
+        meteor = "  @  \n @@@ \n@ @ @\n @@@ \n  @  "
+        meteor_packet = self.packet_boi.auto_forward(meteor)
+        self.t7.queue.put(meteor_packet)
+
+        height = self.t6.height
+        width = self.t6.width
+        # Nice shortcut to wrap at the canvas width
+        self.packet_boi.set_target_width(width - 1)
+        
+        
+        seed = ""
+        # Play around with the density for different results, 0.1 - 0.5 for best results
+        density = 0.2
+        for cell in range(height * width):
+            if random.random() < density:
+                seed += "@"
+            else:
+                seed += "·"
+                
+        # Write the seed to the canvas to start the loop :D
+        start = self.packet_boi.write_to_canvas(seed)        
+        # Whenever something doesnt work, give it a little nap, race conditions are a true thing with threads
+        time.sleep(0.001)
+        self.t6.queue.put(start)
+        ASCII_SCREEN.clear_screen()
+        print(ASCII_SCREEN.render(self.t6.canvas))
+        time.sleep(1)
+        
+        new_buffer = []
+        generation = 0
+        
+        while True:
+            # This timer controls the speed of the simulation
+
+            time.sleep(0.1)
+            for y in range(1, height + 1):
+                for x in range(1, width):
+                    cell = self.t6.canvas[y][x]
+                    neighbours = 0
+
+                    # Define the 8 neighbor directions (dy, dx)
+                    directions = [(-1, -1), (-1, 0), (-1, 1),
+                                  ( 0, -1),          ( 0, 1),
+                                  (1,  -1), ( 1, 0), ( 1, 1)]
+
+                    # Count live neighbors safely
+                    for dy, dx in directions:
+                        ny, nx = y + dy, x + dx
+                        if 1 <= ny <= height and 1 <= nx <= width:
+                            if self.t6.canvas[ny][nx]["char"] == "@":
+                                neighbours += 1
+
+                    # Apply Game of Life rules
+                    if cell["char"] == "@" and (neighbours == 2 or neighbours == 3):
+                        new_buffer.append("@")
+                    elif cell["char"] == "·" and neighbours == 3:
+                        new_buffer.append("@")
+                    else:
+                        new_buffer.append("·")
+
+            buff_to_str = ''.join(new_buffer)
+            packet = self.packet_boi.write_to_canvas(buff_to_str)
+            self.t6.queue.put(packet)
+            new_buffer.clear()
+            generation += 1
+            
+            # Set a random path for the incoming meteorite
+            rand_height = random.randint(2,height -2)
+            rand_width = random.randint(2, width -2)
+            random_yx = (rand_height, rand_width)
+            
+            next_meteor = random.randint(20,50)
+            
+            # Every 30 generations a meteorite will strike!! :D:D
+            if generation >= next_meteor:
+                move_meteor = self.packet_boi.set_origin_on_host(random_yx)
+                self.t7.queue.put(move_meteor)
+                self.t7.queue.put(meteor_packet)
+                generation = 0
+                
+            time.sleep(0.001)
+            ASCII_SCREEN.clear_screen()
+            print(ASCII_SCREEN.render(self.t6.canvas))
+
+
 
 
     def test_loop(self):
@@ -397,9 +490,10 @@ class EXAMPLES():
         self.t4.alive = False
         self.t5.alive = False
         self.t6.alive = False
+        self.t7.alive = False
         
         # Wait for the threads to exit
-        self.threads = [self.thread1, self.thread2, self.thread3, self.thread4, self.thread5, self.thread6]
+        self.threads = [self.thread1, self.thread2, self.thread3, self.thread4, self.thread5, self.thread6, self.thread7]
         for thread in self.threads:
             if thread != None:
                 thread.join()
@@ -410,6 +504,6 @@ class EXAMPLES():
 
 try:
     test = EXAMPLES()
-    test.chaining_test()
+    test.game_of_life()
 finally:
     test.shutdown()
