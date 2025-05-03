@@ -53,7 +53,7 @@ class EXAMPLES():
         self.t4 = CANVA_THREAD("canvas4", "main", 7, 50, host="canvas1", origin_yx=(1, 1))
         self.t5 = CANVA_THREAD("canvas5", "main", 3, 20, host="canvas4", origin_yx=(1, 1))
         # Game of life canvases
-        self.t6 = CANVA_THREAD("game_of_life", "main", 50, 120)
+        self.t6 = CANVA_THREAD("game_of_life", "main", 50, 140)
         self.t7 = CANVA_THREAD("meteor", "main", 7, 7, host="game_of_life", origin_yx=(4,10) )
         
         # Wrap in real threading.Thread runners, target the CANVA_THREAD run function
@@ -89,7 +89,7 @@ class EXAMPLES():
         """
         self.packet_boi.set_content_origin((1,1))
         # A meteorite "sprite" that will be striking the automatas randomly
-        meteor = "  @  \n @@@ \n@ @ @\n @@@ \n  @  "
+        meteor = "  @  \n @ @ \n@ @ @\n @ @ \n  @  "
         meteor_packet = self.packet_boi.auto_forward(meteor)
         self.t7.queue.put(meteor_packet)
 
@@ -160,7 +160,7 @@ class EXAMPLES():
             rand_width = random.randint(2, width -2)
             random_yx = (rand_height, rand_width)
             
-            next_meteor = random.randint(20,50)
+            next_meteor = random.randint(10,30)
             
             # Every 30 generations a meteorite will strike!! :D:D
             if generation >= next_meteor:
