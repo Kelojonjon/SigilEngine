@@ -264,8 +264,6 @@ class CANVA_THREAD():
             self.sync_host()
     
 
-    from ascii_screen import ASCII_SCREEN
-
     def parse_packet(self, packet):
         """
         Process and execute commands from an incoming packet.
@@ -311,8 +309,6 @@ class CANVA_THREAD():
             #print(f"[{self.canvas_id}] ✍️ Wrote {written} cells.") # Debug
 
 
-
-
         elif command == "forward_to":
             written = ASCII_SCREEN.zip_and_write(self.canvas, chart, metadata)
             #print(f"[{self.canvas_id}] ✍️ Wrote {written} cells.")
@@ -355,9 +351,7 @@ class CANVA_THREAD():
                         host_queue.put(packet)
                         #print(f"[{self.canvas_id}] 🚀 Forwarded {len(forward_metadata)} cells to host '{self.host}'")
                   
-                  
-                  
-                    
+                   
         elif command == "auto_forward":
             # First, write the content to the local canvas
             written = ASCII_SCREEN.zip_and_write(self.canvas, chart, metadata)
