@@ -91,7 +91,7 @@ class EXAMPLES():
         # A meteorite "sprite" that will be striking the automatas randomly
         meteor = "  @  \n @ @ \n@ @ @\n @ @ \n  @  "
         meteor_packet = self.packet_boi.auto_forward(meteor)
-        self.t7.queue.put(meteor_packet)
+        self.t7.queue.put(meteor_packet) 
 
         height = self.t6.height
         width = self.t6.width
@@ -109,10 +109,13 @@ class EXAMPLES():
                 seed += "·"
                 
         # Write the seed to the canvas to start the loop :D
-        start = self.packet_boi.write_to_canvas(seed)        
+        seed_packet = self.packet_boi.write_to_canvas(seed)
+               
         # Whenever something doesnt work, give it a little nap, race conditions are a true thing with threads
         time.sleep(0.001)
-        self.t6.queue.put(start)
+        self.t6.queue.put(seed_packet)
+
+        # Render the starting seed before starting the loop
         ASCII_SCREEN.clear_screen()
         print(ASCII_SCREEN.render(self.t6.canvas))
         time.sleep(1)
@@ -122,8 +125,7 @@ class EXAMPLES():
         
         while True:
             # This timer controls the speed of the simulation
-
-            time.sleep(0.1)
+            time.sleep(0.05)
             for y in range(1, height + 1):
                 for x in range(1, width):
                     cell = self.t6.canvas[y][x]
@@ -160,9 +162,10 @@ class EXAMPLES():
             rand_width = random.randint(2, width -2)
             random_yx = (rand_height, rand_width)
             
+            # Fiddle around with this range to control the frequency of the meteor strikes
             next_meteor = random.randint(10,30)
             
-            # Every 30 generations a meteorite will strike!! :D:D
+            # Every 30 or so generations a meteorite will strike!! :D:D
             if generation >= next_meteor:
                 move_meteor = self.packet_boi.set_origin_on_host(random_yx)
                 self.t7.queue.put(move_meteor)
@@ -171,6 +174,7 @@ class EXAMPLES():
                 
             time.sleep(0.001)
             ASCII_SCREEN.clear_screen()
+            # Add a ignored value to not render the fillvalue  
             print(ASCII_SCREEN.render(self.t6.canvas))
 
 
