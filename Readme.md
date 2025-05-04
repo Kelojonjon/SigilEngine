@@ -2,6 +2,8 @@
 
 ## Foreword
 
+THIS IS THE PLAYGROUND BRANCH FOR A STABLE(R) EXPERIENCE USE THE MASTER BRANCH :D:D
+
 This is a hobby project that can be used to build various ASCII based "projects"
 
 The architechture is built in a way that should allow, easy expansion, and adding of new features, with minimal changes.

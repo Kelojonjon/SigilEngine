@@ -178,8 +178,6 @@ class EXAMPLES():
             print(ASCII_SCREEN.render(self.t6.canvas))
 
 
-
-
     def test_loop(self):
         """
         Test random teleportation of canvases on the host canvas.

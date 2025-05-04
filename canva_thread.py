@@ -1,7 +1,8 @@
-from ascii_screen import ASCII_SCREEN
 from queue import Queue
 from space import SPACE
 from space import SPACE_LOCK
+from ascii_screen import ASCII_SCREEN
+from logger import CANVA_LOGGER
 
 
 class CANVA_THREAD():
@@ -25,7 +26,6 @@ class CANVA_THREAD():
         height,
         width,
         fillvalue = "·", 
-        groups = None, 
         host = None, 
         visible = True,   
         origin_yx = (1,1)
@@ -51,8 +51,7 @@ class CANVA_THREAD():
         self.canvas_id = canvas_id
         self.owner = owner
         self.host = host
-        self.groups = groups or []
-        
+ 
         self.origin_yx = origin_yx
         self.height = height
         self.width = width
@@ -63,9 +62,8 @@ class CANVA_THREAD():
         self.conversion_chart = None
         
         
-         # Command queue that the ´parse_packet´ is monitoring for recieved packets
+        # Command queue that the ´parse_packet´ is monitoring for recieved packets
         self.queue = Queue()
-
         # Canvas buffer
         self.canvas = None
 
@@ -74,7 +72,10 @@ class CANVA_THREAD():
         self.host_height = None
         self.host_width = None
         
-    
+        # Logger module
+        self.logger = CANVA_LOGGER(self.canvas_id, self.owner)
+        
+        
     #############################################################
     
     
@@ -350,8 +351,8 @@ class CANVA_THREAD():
                     if host_queue:
                         host_queue.put(packet)
                         #print(f"[{self.canvas_id}] 🚀 Forwarded {len(forward_metadata)} cells to host '{self.host}'")
-                  
-                   
+                        
+                               
         elif command == "auto_forward":
             # First, write the content to the local canvas
             written = ASCII_SCREEN.zip_and_write(self.canvas, chart, metadata)

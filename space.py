@@ -1,5 +1,6 @@
 from threading import Lock
 
+
 """
 Global registry and synchronization lock for canvas threads.
 
@@ -14,3 +15,6 @@ SPACE_LOCK:
 
 SPACE = {}
 SPACE_LOCK = Lock()
+
+# Central queue for logging handling
+LOGGER_SPACE = {}
