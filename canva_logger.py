@@ -81,8 +81,11 @@ class MyMonsterHandler(logging.Handler):
                 self.log_buffer.append(log_record)
             else:
                 with LOGGER_LOCK:
-                    LOGGER_SPACE["central"]
-        else:
+                    try:
+                        LOGGER_SPACE["central"]["central_log_queue"].put(log_record)
+                    except Exception:
+                        return
+        else:   
             return
 
 
@@ -99,7 +102,8 @@ class CANVA_LOGGER():
         
         # Every buffer flush the alive flag of the central logger is checked
         # If its false we will set logging to false and make the emit function early return 
-        # When re-enabling the central logging, the ocasiaonal check_log_buffer will 
+        # When re-enabling the central logging, the ocasiaonal check_log_buffer will make sure
+        # the logging will be enabled again
         self.logging_enabled = False
         
         # We will send the logs the central queue in batches to limit spam
@@ -127,10 +131,11 @@ class CANVA_LOGGER():
         #self.test_handler.setFormatter(formatter)
 
 
-    def set_log_batch(self, batch_size: int):
+    def log_batch_size(self, batch_size: int):
         """
         Set a new batch size, default on init is 10
         """
+        # TODO handle the checking in the create packet later 
         if isinstance(batch_size, int) and batch_size > 0:
             self.batch_size = batch_size
         else:
@@ -138,13 +143,19 @@ class CANVA_LOGGER():
     
     def check_log_buffer(self):
         """
-        
+        Check if central logger is alive and flush batch if needed.
         """
         with LOGGER_LOCK:
             if LOGGER_SPACE.get("central", False):
                 self.logging_enabled = True
                 if len(self.log_buffer) >= self.batch_size:
-                    pass #TODO SEND TO CENTRAL QUEUE && CLEAR THE BUFFER
+                    # Use try so if the central_log_queue is full or the central is down
+                    # it doesnt crash the canva_thread
+                    try:
+                        LOGGER_SPACE["central"]["central_log_queue"].put(self.log_buffer.copy())
+                        self.log_buffer.clear()
+                    except Exception:
+                        return
             else:
                 self.logging_enabled = False
             
