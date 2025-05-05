@@ -22,6 +22,7 @@ Future plans (depending on motivation of the hobbyist :D):
 - Proper logging
 - Styling options
 - Handle visibility, and possibly "writable" metadata for individual cells
+- ANSI screen refreshing curses style
 
 The below readme is generated using AI, if something is  unclear, you should find the answer from the codebase!
 

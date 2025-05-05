@@ -1,8 +1,9 @@
+import time
 from queue import Queue
 from space import SPACE
 from space import SPACE_LOCK
 from ascii_screen import ASCII_SCREEN
-from logger import CANVA_LOGGER
+from canva_logger import CANVA_LOGGER
 
 
 class CANVA_THREAD():
@@ -72,8 +73,10 @@ class CANVA_THREAD():
         self.host_height = None
         self.host_width = None
         
-        # Logger module
+        # Logger module, the default prebuffer size for logger records is 10
         self.logger = CANVA_LOGGER(self.canvas_id, self.owner)
+        # Seconds interval the logger_buffer lenght will be checked 
+        self.check_interval = 1
         
         
     #############################################################
@@ -416,7 +419,7 @@ class CANVA_THREAD():
 
         elif command == "!kill":
             self.kill()
-
+            
         else:
             #print(f"[{self.canvas_id}] ⚠️ Unknown command: {command}")
             return
@@ -465,9 +468,19 @@ class CANVA_THREAD():
         
         
         #print(f"[THREAD {self.canvas_id}] Running.")
+        
+        # Limit the logger check_log_buffer to check at one second intervalls
+        last_check = 0
+        
         try:
             while self.alive:
                 try:
+                    # Check the logger buffer length 
+                    now = time.time()
+                    if now - last_check >= self.check_interval:
+                        self.logger.check_log_buffer()
+                        last_check = now
+                    # Listen for the queue
                     cmd = self.queue.get(timeout=0.1)
                     self.parse_packet(cmd)
                 except Exception:

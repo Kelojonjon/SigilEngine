@@ -18,3 +18,4 @@ SPACE_LOCK = Lock()
 
 # Central queue for logging handling
 LOGGER_SPACE = {}
+LOGGER_LOCK = Lock()

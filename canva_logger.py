@@ -1,7 +1,13 @@
 import logging
 from space import LOGGER_SPACE
+from space import LOGGER_LOCK
 
 """
+
+TODO add all the command packet stuff to the packet creator
+TODO also handle them in the canva_thread parser
+TODO 
+
 🚀 Logger Plan Overview
 
 Flow:
@@ -74,9 +80,11 @@ class MyMonsterHandler(logging.Handler):
             if log_record.levelno <= 30:
                 self.log_buffer.append(log_record)
             else:
-                pass # SEND TO CENTRAL QUEUE
+                with LOGGER_LOCK:
+                    LOGGER_SPACE["central"]
         else:
             return
+
 
 class CANVA_LOGGER():
     """
@@ -91,9 +99,7 @@ class CANVA_LOGGER():
         
         # Every buffer flush the alive flag of the central logger is checked
         # If its false we will set logging to false and make the emit function early return 
-        # When re-enabling the central logging the central logger will send a "im alive!" cmd
-        #.. packet, to all canvases in the SPACE
-        # canva threads will parse and execute the check_log_buffer to re-enable logging
+        # When re-enabling the central logging, the ocasiaonal check_log_buffer will 
         self.logging_enabled = False
         
         # We will send the logs the central queue in batches to limit spam
@@ -121,7 +127,6 @@ class CANVA_LOGGER():
         #self.test_handler.setFormatter(formatter)
 
 
-
     def set_log_batch(self, batch_size: int):
         """
         Set a new batch size, default on init is 10
@@ -135,13 +140,14 @@ class CANVA_LOGGER():
         """
         
         """
-        if LOGGER_SPACE.get("central", False):
-            self.logging_enabled = True
-            if len(self.log_buffer) >= self.batch_size:
-                pass # SEND TO CENTRAL QUEUE && CLEAR THE BUFFER
-        else:
-            self.logging_enabled = False
-        
+        with LOGGER_LOCK:
+            if LOGGER_SPACE.get("central", False):
+                self.logging_enabled = True
+                if len(self.log_buffer) >= self.batch_size:
+                    pass #TODO SEND TO CENTRAL QUEUE && CLEAR THE BUFFER
+            else:
+                self.logging_enabled = False
+            
         
     def info(self, msg):
         self.logger.info(msg, extra={"owner": self.owner})
