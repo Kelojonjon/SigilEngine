@@ -56,38 +56,93 @@ Control options:
 - External tailing → live monitoring via file tools only
 """
 
+
 class MyMonsterHandler(logging.Handler):
     """
     Custom handler that will append the records to the prebuffer
-    Prebuffer will send records in batches to the central logging handler
+    Prebuffer will send records in batches to the central logging queue
+    Anything above warning --> straight to the central logging queue
     """
-    def __init__(self, buffer):
-        # Inherit the handler init :D
+    def __init__(self, buffer, canva_logger):
         super().__init__()
-        def emit():
-            pass
-
+        self.log_buffer = buffer
+        # We need this reference to dynamicly use the enabled flag from the canva_logger
+        self.canva_logger = canva_logger
+        
+    def emit(self, log_record):
+        if self.canva_logger.logging_enabled:
+            if log_record.levelno <= 30:
+                self.log_buffer.append(log_record)
+            else:
+                pass # SEND TO CENTRAL QUEUE
+        else:
+            return
 
 class CANVA_LOGGER():
     """
+    This logger is canvas-native each canvas will have its own little logger
     Logger wrapper that attaches the owner metadata automaticly
+    Has functions to check the buffer size
     """
     def __init__(self, canvas_id, owner, batch_size=10):
         
+        # Extra metadata for teh records
         self.owner = owner
         
+        # Every buffer flush the alive flag of the central logger is checked
+        # If its false we will set logging to false and make the emit function early return 
+        # When re-enabling the central logging the central logger will send a "im alive!" cmd
+        #.. packet, to all canvases in the SPACE
+        # canva threads will parse and execute the check_log_buffer to re-enable logging
+        self.logging_enabled = False
+        
         # We will send the logs the central queue in batches to limit spam
-        self.buffer = []
+        # Messages above a certain level will skip this buffer
+        self.log_buffer = []
         self.batch_size = batch_size
-    
-        self.handler = MyMonsterHandler(self.buffer)
-        self.logger = logging.getLogger(canvas_id) # Logger channel
-        
-        
-        self.logger.setLevel(logging.DEBUG) # Filtering will be handled later
-        self.handler.setLevel(logging.DEBUG)
-        
 
+        # Setup the logger and handler/s
+        self.logger = logging.getLogger(canvas_id) # Logger channel
+        self.handler = MyMonsterHandler(self.log_buffer, self)
+        #self.test_handler = logging.StreamHandler()
+        
+        # Add handlers to the logger
+        self.logger.addHandler(self.handler)
+        #self.logger.addHandler(self.test_handler)
+        
+        # Set the levels to pass everything trough DEBUG ---> CRITICAL
+        self.logger.setLevel(logging.DEBUG)
+        self.handler.setLevel(logging.DEBUG)
+        #self.test_handler.setLevel(logging.DEBUG)
+        
+        # Set some pretty formatting for the handler/s
+        formatter = logging.Formatter('%(name)s %(levelname)s %(asctime)s: %(message)s')
+        self.handler.setFormatter(formatter)
+        #self.test_handler.setFormatter(formatter)
+
+
+
+    def set_log_batch(self, batch_size: int):
+        """
+        Set a new batch size, default on init is 10
+        """
+        if isinstance(batch_size, int) and batch_size > 0:
+            self.batch_size = batch_size
+        else:
+            self.error("Logger batch size must be a integer and above 0")
+    
+    def check_log_buffer(self):
+        """
+        
+        """
+        if LOGGER_SPACE.get("central", False):
+            self.logging_enabled = True
+            if len(self.log_buffer) >= self.batch_size:
+                pass # SEND TO CENTRAL QUEUE && CLEAR THE BUFFER
+        else:
+            self.logging_enabled = False
+        
+        
     def info(self, msg):
         self.logger.info(msg, extra={"owner": self.owner})
     
