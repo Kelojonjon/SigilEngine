@@ -82,7 +82,7 @@ class MyMonsterHandler(logging.Handler):
             else:
                 with LOGGER_LOCK:
                     try:
-                        LOGGER_SPACE["central"]["central_log_queue"].put(log_record)
+                        LOGGER_SPACE[self.loghub]["hub_log_queue"].put(log_record)
                     except Exception:
                         return
         else:   
@@ -95,10 +95,11 @@ class CANVA_LOGGER():
     Logger wrapper that attaches the owner metadata automaticly
     Has functions to check the buffer size
     """
-    def __init__(self, canvas_id, owner, batch_size=10):
+    def __init__(self, canvas_id, owner, loghub, batch_size=10):
         
         # Extra metadata for teh records
         self.owner = owner
+        
         
         # Every buffer flush the alive flag of the central logger is checked
         # If its false we will set logging to false and make the emit function early return 
@@ -111,26 +112,22 @@ class CANVA_LOGGER():
         self.log_buffer = []
         self.batch_size = batch_size
 
+        # Logs will be sent here to be processed, could later allow acting as a forwarder to other hubs
+        self.loghub = loghub
+        
         # Setup the logger and handler/s
         self.logger = logging.getLogger(canvas_id) # Logger channel
         self.handler = MyMonsterHandler(self.log_buffer, self)
-        #self.test_handler = logging.StreamHandler()
-        
+
         # Add handlers to the logger
         self.logger.addHandler(self.handler)
-        #self.logger.addHandler(self.test_handler)
-        
+
         # Set the levels to pass everything trough DEBUG ---> CRITICAL
         self.logger.setLevel(logging.DEBUG)
         self.handler.setLevel(logging.DEBUG)
-        #self.test_handler.setLevel(logging.DEBUG)
+
         
-        # Set some pretty formatting for the handler/s
-        formatter = logging.Formatter('%(name)s %(levelname)s %(asctime)s: %(message)s')
-        self.handler.setFormatter(formatter)
-        #self.test_handler.setFormatter(formatter)
-
-
+        
     def log_batch_size(self, batch_size: int):
         """
         Set a new batch size, default on init is 10
@@ -146,13 +143,13 @@ class CANVA_LOGGER():
         Check if central logger is alive and flush batch if needed.
         """
         with LOGGER_LOCK:
-            if LOGGER_SPACE.get("central", False):
+            if LOGGER_SPACE.get(self.loghub, False):
                 self.logging_enabled = True
                 if len(self.log_buffer) >= self.batch_size:
                     # Use try so if the central_log_queue is full or the central is down
                     # it doesnt crash the canva_thread
                     try:
-                        LOGGER_SPACE["central"]["central_log_queue"].put(self.log_buffer.copy())
+                        LOGGER_SPACE[self.loghub]["hub_log_queue"].put(self.log_buffer.copy())
                         self.log_buffer.clear()
                     except Exception:
                         return

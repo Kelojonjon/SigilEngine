@@ -29,7 +29,8 @@ class CANVA_THREAD():
         fillvalue = "·", 
         host = None, 
         visible = True,   
-        origin_yx = (1,1)
+        origin_yx = (1,1),
+        loghub = None
         ):
         """
         Initialize a CANVA_THREAD instance.
@@ -62,7 +63,6 @@ class CANVA_THREAD():
         # Canvas sized y.x chart that starts from the origin_yx coordinates 
         self.conversion_chart = None
         
-        
         # Command queue that the ´parse_packet´ is monitoring for recieved packets
         self.queue = Queue()
         # Canvas buffer
@@ -73,8 +73,11 @@ class CANVA_THREAD():
         self.host_height = None
         self.host_width = None
         
+        # Log handler is the central address where all the logs are sent to being handled
+        # If no handler is set or if it doesnt exist, logging will be disabled
+        self.loghub = loghub
         # Logger module, the default prebuffer size for logger records is 10
-        self.logger = CANVA_LOGGER(self.canvas_id, self.owner)
+        self.logger = CANVA_LOGGER(self.canvas_id, self.owner, self.loghub)
         # Seconds interval the logger_buffer lenght will be checked 
         self.check_interval = 1
         
