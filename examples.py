@@ -16,11 +16,11 @@ Below are all the modules provided in the project:
 4. **PACKET_CREATOR** is a simple API that allows interaction with canvases through simple commands.  
    Requests are validated and returned as ready-to-send packets for the CANVA_THREAD parser.
 """
-from space import SPACE
-from space import SPACE_LOCK
-from ascii_screen import ASCII_SCREEN
-from canva_thread import CANVA_THREAD
-from packet_creator import PACKET_CREATOR
+from sigilengine.space import SPACE
+from sigilengine.space import SPACE_LOCK
+from sigilengine.ascii_screen import ASCII_SCREEN
+from sigilengine.canva_thread import CANVA_THREAD
+from sigilengine.packet_creator import PACKET_CREATOR
 
 
 class EXAMPLES():

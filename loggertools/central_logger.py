@@ -1,10 +1,12 @@
 
+from logging.handlers import RotatingFileHandler
 import logging
+from pathlib import Path
 from queue import Queue
-from space import SPACE
-from space import SPACE_LOCK
-from space import LOGGER_SPACE
-from space import LOGGER_LOCK
+from sigilengine.space import SPACE
+from sigilengine.space import SPACE_LOCK
+from sigilengine.space import LOGGER_SPACE
+from sigilengine.space import LOGGER_LOCK
 
 class LOGHUB():
     
@@ -16,11 +18,37 @@ class LOGHUB():
         # they register themselves to the LOGGER_SPACE to be interacted with  
         self.hub_id = hub_id
         
-        
+            
         # Where all the logs are sent to be handled
         self.hub_queue = Queue()
         # Queue to send command packages to the central logger
         self.command_queue = Queue()
+        
+        
+        # We will save the logs inside the "logs" subfolder of "loggertools"
+        # Also handle creating a folder is none exists
+        self.log_folder_path = Path(__file__).parent / "logs"
+        self.log_folder_path.mkdir(parents=True, exist_ok=True)
+        self.log_file = self.log_folder_path / f"{self.hub_id}.log"
+        # The size of log files in MB
+        self.log_file_size = 5
+        
+        # This logger will take the records format them, and write to the file
+        self.minilogger = logging.getLogger(self.hub_id)
+        self.rotating_handler = RotatingFileHandler(
+            self.log_file,
+            maxBytes=self.log_file_size * 1024 * 1024,
+            backupCount=3
+        )
+        
+        # Format the log records and add handler to the minilogger
+        formatter = logging.Formatter(format='%(asctime)s %(levelname) [%(owner)s:%(canvas_id)s] %(message)s')
+        self.minilogger.addHandler(self.rotating_handler)
+        self.rotating_handler.setFormatter(formatter)
+        
+        # We will write logs that are < loglevel 40 only every second, to prevent I/O spam
+        # Errors and criticals are written instantly as they arrive, to hopefully catch them 
+        self.file_buffer = []
         
         
         # Flags to decide if we handle levels
@@ -51,9 +79,6 @@ class LOGHUB():
             50: 1  # CRITICAL
         }
 
-        self.formatter = logging.Formatter('%(name)s %(levelname)s %(asctime)s: %(message)s')
-    
-    
     ##################################################################################################
     
     
@@ -77,6 +102,16 @@ class LOGHUB():
         
         return None
         
+    
+    
+    def handle_my_record(self, record):
+        levelno = record.levelno
+        
+        formatted_record = "hello"
+        
+        if levelno >= 40:
+            with
+    
         
     
     def gatekeeper(self, item):

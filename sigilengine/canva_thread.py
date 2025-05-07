@@ -1,9 +1,9 @@
 import time
 from queue import Queue
-from space import SPACE
-from space import SPACE_LOCK
-from ascii_screen import ASCII_SCREEN
-from canva_logger import CANVA_LOGGER
+from sigilengine.space import SPACE
+from sigilengine.space import SPACE_LOCK
+from sigilengine.ascii_screen import ASCII_SCREEN
+from loggertools.canva_logger import CANVA_LOGGER
 
 
 class CANVA_THREAD():

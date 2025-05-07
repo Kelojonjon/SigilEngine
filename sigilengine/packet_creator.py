@@ -1,6 +1,6 @@
 
 
-from ascii_screen import ASCII_SCREEN
+from sigilengine.ascii_screen import ASCII_SCREEN
 
 
 class PACKET_CREATOR():

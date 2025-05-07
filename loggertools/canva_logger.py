@@ -1,6 +1,6 @@
 import logging
-from space import LOGGER_SPACE
-from space import LOGGER_LOCK
+from sigilengine.space import LOGGER_SPACE
+from sigilengine.space import LOGGER_LOCK
 
 """
 
@@ -94,6 +94,8 @@ class CANVA_LOGGER():
     This logger is canvas-native each canvas will have its own little logger
     Logger wrapper that attaches the owner metadata automaticly
     Has functions to check the buffer size
+    The same logger will be usable in the main structure its not only canvas native
+    Will have to rename the thing to something more generic XD
     """
     def __init__(self, canvas_id, owner, loghub, batch_size=10):
         
@@ -156,16 +158,14 @@ class CANVA_LOGGER():
             else:
                 self.logging_enabled = False
             
-        
     def info(self, msg):
-        self.logger.info(msg, extra={"owner": self.owner})
-    
+        self.logger.info(msg, extra={"owner": self.owner, "canvas_id": self.canvas_id})
+
     def warning(self, msg):
-        self.logger.warning(msg, extra={"owner": self.owner})
-    
+        self.logger.warning(msg, extra={"owner": self.owner, "canvas_id": self.canvas_id})
+
     def error(self, msg):
-        self.logger.error(msg, extra={"owner": self.owner})
-    
+        self.logger.error(msg, extra={"owner": self.owner, "canvas_id": self.canvas_id})
+
     def critical(self, msg):
-        self.logger.critical(msg, extra={"owner": self.owner})
-    
+        self.logger.critical(msg, extra={"owner": self.owner, "canvas_id": self.canvas_id})
