@@ -69,11 +69,12 @@ class MyMonsterHandler(logging.Handler):
     Prebuffer will send records in batches to the central logging queue
     Anything above warning --> straight to the central logging queue
     """
-    def __init__(self, buffer, canva_logger):
+    def __init__(self, buffer, canva_logger, loghub):
         super().__init__()
         self.log_buffer = buffer
         # We need this reference to dynamicly use the enabled flag from the canva_logger
         self.canva_logger = canva_logger
+        self.loghub = loghub
         
     def emit(self, log_record):
         if self.canva_logger.logging_enabled:
@@ -101,7 +102,7 @@ class CANVA_LOGGER():
         
         # Extra metadata for teh records
         self.owner = owner
-        
+        self.canvas_id = canvas_id
         
         # Every buffer flush the alive flag of the central logger is checked
         # If its false we will set logging to false and make the emit function early return 
@@ -119,7 +120,8 @@ class CANVA_LOGGER():
         
         # Setup the logger and handler/s
         self.logger = logging.getLogger(canvas_id) # Logger channel
-        self.handler = MyMonsterHandler(self.log_buffer, self)
+        self.handler = MyMonsterHandler(self.log_buffer, self, loghub)
+
 
         # Add handlers to the logger
         self.logger.addHandler(self.handler)
@@ -128,7 +130,6 @@ class CANVA_LOGGER():
         self.logger.setLevel(logging.DEBUG)
         self.handler.setLevel(logging.DEBUG)
 
-        
         
     def log_batch_size(self, batch_size: int):
         """

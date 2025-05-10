@@ -1,5 +1,5 @@
-import time
 from queue import Queue
+from utilities.timermodule import TIMER
 from sigilengine.space import SPACE
 from sigilengine.space import SPACE_LOCK
 from sigilengine.ascii_screen import ASCII_SCREEN
@@ -49,7 +49,7 @@ class CANVA_THREAD():
 
         # Alive flag for the run loop
         self.alive = True
-        
+
         self.canvas_id = canvas_id
         self.owner = owner
         self.host = host
@@ -79,9 +79,11 @@ class CANVA_THREAD():
         # Logger module, the default prebuffer size for logger records is 10
         self.logger = CANVA_LOGGER(self.canvas_id, self.owner, self.loghub)
         # Seconds interval the logger_buffer lenght will be checked 
-        self.check_interval = 1
         
-        
+        # Timer module
+        self.timer = TIMER()
+        self.timer.event(self.logger.check_log_buffer, logevent=10)
+
     #############################################################
     
     
@@ -472,18 +474,11 @@ class CANVA_THREAD():
         
         #print(f"[THREAD {self.canvas_id}] Running.")
         
-        # Limit the logger check_log_buffer to check at one second intervalls
-        last_check = 0
-        
         try:
             while self.alive:
                 try:
-                    # Check the logger buffer length 
-                    now = time.time()
-                    if now - last_check >= self.check_interval:
-                        self.logger.check_log_buffer()
-                        last_check = now
-                    # Listen for the queue
+                    # Execute all the scheduled events, based on their attributes
+                    self.timer.update_timer()
                     cmd = self.queue.get(timeout=0.1)
                     self.parse_packet(cmd)
                 except Exception:

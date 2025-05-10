@@ -3,8 +3,8 @@ from logging.handlers import RotatingFileHandler
 import logging
 from pathlib import Path
 from queue import Queue
-from sigilengine.space import SPACE
-from sigilengine.space import SPACE_LOCK
+
+from utilities.timermodule import TIMER
 from sigilengine.space import LOGGER_SPACE
 from sigilengine.space import LOGGER_LOCK
 
@@ -79,6 +79,8 @@ class LOGHUB():
             50: 1  # CRITICAL
         }
 
+        self.timer = TIMER()
+        self.timer.event(self.minilogger.handle, write_to_file=1)
     ##################################################################################################
     
     
@@ -101,17 +103,37 @@ class LOGHUB():
             return record
         
         return None
+            
         
-    
-    
+    def write_buffered_records(self):
+        """
+        Writes the whole file_buffer to a file, and flushes
+        Timer
+        """
+        for record in self.file_buffer:
+            self.minilogger.handle(record)
+        self.file_buffer.clear()
+        
+           
     def handle_my_record(self, record):
         levelno = record.levelno
         
-        formatted_record = "hello"
+        if record == None:
+            return
         
+        # Handle high priority without buffer        
         if levelno >= 40:
-            with
-    
+            self.minilogger.handle(record)
+        # Append the record to file_buffer
+        if levelno < 40:
+            self.file_buffer.append(record)
+        # Check if time to write to the file
+        # Executes the write_buffered_records when it is the time
+        self.timer.update_timer()
+        
+        
+        
+              
         
     
     def gatekeeper(self, item):
@@ -130,7 +152,7 @@ class LOGHUB():
             
     
     def run(self):
-        
+
         # Init 
         try:
             with LOGGER_LOCK:
@@ -146,6 +168,7 @@ class LOGHUB():
         try:
             while self.alive:
                 try:
+                    
                     item = self.hub_queue.get(timeout=0.1)
                     self.gatekeeper(item)
                 except Exception:
