@@ -27,36 +27,38 @@ class TIMER():
         
     def event(self, action=None, **kwargs):
         """
-        Add events that execute the same action when triggered.
         Keyword args define event names and their intervals in seconds.
-        Action must be a callable.
-
-        Example:
-            timer.event(action=handler, fast=1, slow=5)
 
         Example of a timer_events folder, when something is added
         timer.events = {
-            "action": self.scheduled_event,
-            
-            "added_event_1":{"
+            "added_event_1":{
                     "interval": 1,
-                    "last_trigger": 0 # Works with no interaction
-                "}
+                    "last_trigger": 0, # Works with no interaction
+                    "action": None
+                }
         }
         """
-        # Store the shared action (if any)
-        self.timer_events["action"] = action if callable(action) else None
-                
-                
+
         for event, interval in kwargs.items():
             if isinstance(event, str) and isinstance(interval, int):
                 self.timer_events[event] = {
                     "interval": interval,
-                    "last_trigger": 0
+                    "last_trigger": 0,
+                    "action": None
                 }
             else:
                 continue
-            
+    
+    def action(self, **kwargs):
+        """
+        Add actions to different timer events, actions must be callable functions.
+        Doesnt allow passing arguments directly from the timer.
+        For example state variables can be used as action arguments
+        """
+        if len(self.timer_events) > 0:
+            for event_name, action in kwargs.items():
+                if event_name in self.timer_events and callable(action):
+                    self.timer_events[event_name]["action"] = action
             
 
     def update_timer(self):
@@ -64,21 +66,16 @@ class TIMER():
         Check intervals for all events and executes them as needed
         Doesnt thread, so the timer has to be updated in a running loop
         """
-        action = self.timer_events.get("action", None)
         current_time = time.time()
 
-        if action is None:
-            return  # Nothing to do
-
         for event_name, rules in self.timer_events.items():
-            if event_name == "action":
-                continue
 
             event_interval = rules.get("interval")
             last_trigger = rules.get("last_trigger")
+            action = rules.get("action", None)
 
-            if current_time - last_trigger >= event_interval:
-                self.timer_events[event_name]["last_trigger"] = current_time
+            if current_time - last_trigger >= event_interval and action != None:
+                self.timer_events[event_name]["last_trigger"] += event_interval
                 action()
 
 
