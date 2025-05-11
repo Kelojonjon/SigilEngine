@@ -12,14 +12,21 @@ Individual cells host their own metadata, this allows creating fun stuff like ga
 
 Some of the feartures like "visible" metadata, are in the code, but dont yet do anything.
 
-Future plans (depending on motivation of the hobbyist :D):
+Possible future plans (depending on motivation of the hobbyist :D):
 
 - Sockets and servers for fully async usage and rendering
 - Input handling
 - Scrollable canvases (although this could already be done manually via origin, or content handling)
 - Proper logging
-- Styling options
+- Styling options for terminal rendering
 - Handle visibility, and possibly "writable" metadata for individual cells
+- Rendering via pygame for simulations
+
+Things currently brewing / Upcoming (also depending on the motivation :D):
+
+- Centralized logging system with batching, prebuffers, and metadata
+- Event-based timer module for scheduled triggers
+- Refactoring of the code (especially the canva_thread parser :D)
 
 The below readme is generated using AI, if something is  unclear, you should find the answer from the codebase!
 
