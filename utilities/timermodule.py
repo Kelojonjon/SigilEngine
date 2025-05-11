@@ -77,7 +77,7 @@ class TIMER():
             event_interval = rules.get("interval")
             last_trigger = rules.get("last_trigger")
 
-            if abs(current_time - last_trigger) >= event_interval:
+            if current_time - last_trigger >= event_interval:
                 self.timer_events[event_name]["last_trigger"] = current_time
                 action()
 

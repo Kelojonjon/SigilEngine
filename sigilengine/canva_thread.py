@@ -82,6 +82,8 @@ class CANVA_THREAD():
         
         # Timer module
         self.timer = TIMER()
+        
+        # Ecents added to the timer
         self.timer.event(self.logger.check_log_buffer, logevent=10)
 
     #############################################################
