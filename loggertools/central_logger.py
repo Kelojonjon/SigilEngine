@@ -80,7 +80,8 @@ class LOGHUB():
         }
 
         self.timer = TIMER()
-        self.timer.event(self.minilogger.handle, write_to_file=1)
+        self.timer.event(write_to_file=1)
+        self.timer.action(write_to_file=self.write_buffered_records)
     ##################################################################################################
     
     
@@ -110,10 +111,11 @@ class LOGHUB():
         Writes the whole file_buffer to a file, and flushes
         Timer
         """
-        for record in self.file_buffer:
-            self.minilogger.handle(record)
-        self.file_buffer.clear()
-        
+        if len(self.file_buffer) > 0:
+            for record in self.file_buffer:
+                self.minilogger.handle(record)
+            self.file_buffer.clear()
+            
            
     def handle_my_record(self, record):
         levelno = record.levelno
@@ -127,11 +129,7 @@ class LOGHUB():
         # Append the record to file_buffer
         if levelno < 40:
             self.file_buffer.append(record)
-        # Check if time to write to the file
-        # Executes the write_buffered_records when it is the time
-        self.timer.update_timer()
-        
-        
+       
         
               
         
@@ -168,7 +166,10 @@ class LOGHUB():
         try:
             while self.alive:
                 try:
-                    
+                    # Check if time to write to the file
+                    # Executes the write_buffered_records when it is the time
+                    self.timer.update_timer()
+
                     item = self.hub_queue.get(timeout=0.1)
                     self.gatekeeper(item)
                 except Exception:

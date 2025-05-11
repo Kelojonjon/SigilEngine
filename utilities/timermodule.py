@@ -25,7 +25,7 @@ class TIMER():
         self.timer_events = {}
     
         
-    def event(self, action=None, **kwargs):
+    def event(self, **kwargs):
         """
         Keyword args define event names and their intervals in seconds.
 
