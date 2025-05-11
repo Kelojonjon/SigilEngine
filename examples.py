@@ -21,6 +21,8 @@ from sigilengine.space import SPACE_LOCK
 from sigilengine.ascii_screen import ASCII_SCREEN
 from sigilengine.canva_thread import CANVA_THREAD
 from sigilengine.packet_creator import PACKET_CREATOR
+from loggertools.canva_logger import CANVA_LOGGER
+from loggertools.central_logger import LOGHUB
 
 
 class EXAMPLES():
@@ -47,7 +49,7 @@ class EXAMPLES():
         print("🚀 Starting CANVA_THREADS...\n")
         
         # Create thread objects
-        self.t1 = CANVA_THREAD("canvas1", "main", 15, 70)
+        self.t1 = CANVA_THREAD("canvas1", "main", 15, 70, loghub="loghub") # This canva is connected to the loghub
         self.t2 = CANVA_THREAD("canvas2", "main", 3, 9, host="canvas1", origin_yx=(1, 1))
         self.t3 = CANVA_THREAD("canvas3", "main", 4, 10, host="canvas1", origin_yx=(1, 1))
         self.t4 = CANVA_THREAD("canvas4", "main", 7, 50, host="canvas1", origin_yx=(1, 1))
@@ -55,6 +57,8 @@ class EXAMPLES():
         # Game of life canvases
         self.t6 = CANVA_THREAD("game_of_life", "main", 50, 140)
         self.t7 = CANVA_THREAD("meteor", "main", 7, 7, host="game_of_life", origin_yx=(4,10) )
+        # Logger that logs canvas1 
+        self.log1 = LOGHUB("loghub")
         
         # Wrap in real threading.Thread runners, target the CANVA_THREAD run function
         self.thread1 = threading.Thread(target=self.t1.run)
@@ -64,6 +68,7 @@ class EXAMPLES():
         self.thread5 = threading.Thread(target=self.t5.run)
         self.thread6 = threading.Thread(target=self.t6.run)
         self.thread7 = threading.Thread(target=self.t7.run)
+        self.logthread = threading.Thread(target=self.log1.run)
 
         # Start the threads
         self.thread1.start()
@@ -73,6 +78,7 @@ class EXAMPLES():
         self.thread5.start()
         self.thread6.start()
         self.thread7.start()
+        self.logthread.start()
         
         # Packet creator, init with the desired content width
         # For manual \n wrapping be sure to set it wide enough for your canvas
@@ -493,9 +499,12 @@ class EXAMPLES():
         self.t5.alive = False
         self.t6.alive = False
         self.t7.alive = False
+        self.log1.alive = False
         
         # Wait for the threads to exit
-        self.threads = [self.thread1, self.thread2, self.thread3, self.thread4, self.thread5, self.thread6, self.thread7]
+        self.threads = [self.thread1, self.thread2, self.thread3,
+                        self.thread4, self.thread5, self.thread6,
+                        self.thread7, self.logthread]
         for thread in self.threads:
             if thread != None:
                 thread.join()
@@ -506,6 +515,6 @@ class EXAMPLES():
 
 try:
     test = EXAMPLES()
-    test.game_of_life()
+    test.resize_and_fillvalue_test()
 finally:
     test.shutdown()

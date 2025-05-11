@@ -11,6 +11,10 @@ from sigilengine.space import LOGGER_LOCK
 class LOGHUB():
     
     def __init__(self, hub_id):
+        """
+        Missing command_queue handling currently
+        """
+        
         
         # Alive flag
         self.alive = True
@@ -42,7 +46,11 @@ class LOGHUB():
         )
         
         # Format the log records and add handler to the minilogger
-        formatter = logging.Formatter(format='%(asctime)s %(levelname) [%(owner)s:%(canvas_id)s] %(message)s')
+        #formatter = logging.Formatter(fmt='%(asctime)s %(levelname) [%(owner)s:%(canvas_id)s] %(message)s')
+        
+        #TEST FORMATTER! MISSING OWNER AND CANVA_ID
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+
         self.minilogger.addHandler(self.rotating_handler)
         self.rotating_handler.setFormatter(formatter)
         
@@ -72,11 +80,11 @@ class LOGHUB():
 
         # Helper counter for the sample_filtering
         self.sample_counter = {
-            10: 1, # DEBUG
-            20: 1, # INFO
-            30: 1, # WARNING
-            40: 1, # ERROR
-            50: 1  # CRITICAL
+            10: 0, # DEBUG
+            20: 0, # INFO
+            30: 0, # WARNING
+            40: 0, # ERROR
+            50: 0  # CRITICAL
         }
 
         self.timer = TIMER()
@@ -130,10 +138,7 @@ class LOGHUB():
         if levelno < 40:
             self.file_buffer.append(record)
        
-        
               
-        
-    
     def gatekeeper(self, item):
         """
         Flattens the lists, routes the records trough the filter
@@ -148,7 +153,6 @@ class LOGHUB():
             self.handle_my_record(filtered_item)
                 
             
-    
     def run(self):
 
         # Init 

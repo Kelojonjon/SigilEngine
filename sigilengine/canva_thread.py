@@ -104,19 +104,9 @@ class CANVA_THREAD():
                 "width": self.width,
                 "visible": self.visible,
             })
-            #print(f"[{self.canvas_id}] 🧾 State synced → SPACE: height={self.height}, width={self.width}, visible={self.visible}")
+            self.logger.info(f"State synced to SPACE: height={self.height}, width={self.width}, visible={self.visible}")
 
-    
-    def clear_canvas(self):
-        """
-        Reset the canvas buffer to its default state.
-        
-        Regenerates the canvas using current state variables (ID, owner, dimensions,
-        fill value, visibility). This effectively clears all content while maintaining
-        the canvas configuration.
-        """
-        self.canvas = ASCII_SCREEN.create_canvas(self.canvas_id, self.owner, self.height, self.width, self.fill_value, self.visible)
-    
+
     def check_host(self):
         """
         Check if the configured host exists in the SPACE registry.
@@ -126,9 +116,12 @@ class CANVA_THREAD():
         """
         if not self.host:
             return False
+        
         with SPACE_LOCK:
             host = SPACE.get(self.host, False)
+            self.logger.info(f"Host check: host_id={self.host}, exists={bool(host)}")
             return bool(host)      
+    
     
     def sync_host(self):
         """
@@ -144,40 +137,28 @@ class CANVA_THREAD():
         """
             
         if not self.host:
-            #print(f"[{self.canvas_id}] 💤 No host assigned")
+            self.logger.info(f"No host assigned, skipping host sync.")
             return
         
         with SPACE_LOCK:
             host_data = SPACE.get(self.host)
             
         if not host_data:
-            #print(f"[{self.canvas_id}] ❌ Cannot set host — '{self.host}' not found in SPACE.")
+            self.logger.info(f"Host not found in SPACE: host_id={self.host}")
             return
 
         self.host_height = host_data.get("height")
         self.host_width = host_data.get("width")
         
         self.host_ref_canvas = ASCII_SCREEN.create_ref_canvas(self.host_height, self.host_width)
-        #print(f"[{self.canvas_id}] Host id: [{self.host}] Host size: {self.host_height} x {self.host_width}")
-
         self.conversion_chart = ASCII_SCREEN.generate_coords(self.origin_yx, self.height, self.width)
-        
         ASCII_SCREEN.box_borders(self.host_ref_canvas, self.origin_yx, self.height, self.width)
         
-
-    def kill(self):
-        """
-        Terminate the thread and remove it from SPACE.
-        
-        This method is called when a "!kill" command is received.
-        It removes the canvas from the global registry and sets
-        the alive flag to False, which will cause the thread to exit.
-        """  
-        with SPACE_LOCK:
-            SPACE.pop(self.canvas_id, None)
-        self.alive = False
-        print(f"[{self.canvas_id}] 💀 Marked as dead by '!kill'.")
-        
+        self.logger.info(
+            f"Host sync complete: host_id={self.host}, host_size=({self.host_height}x{self.host_width}), "
+            f"origin={self.origin_yx}, canvas_size=({self.height}x{self.width})"
+        )
+   
         
     def set_host(self, host_id: str):
         """
@@ -191,13 +172,27 @@ class CANVA_THREAD():
         """
         with SPACE_LOCK:
             if host_id not in SPACE:
-                #print(f"[{self.canvas_id}] ❌ Cannot set host — '{host_id}' not found in SPACE.")
+                self.logger.info(f"Host not found in SPACE: host_id={self.host}")
                 return
             
         self.host = host_id
-        #print(f"[{self.canvas_id}] 🔁 Host set to '{self.host}'. Resyncing...")
+        self.logger.info(f"Host updated: canvas_id={self.canvas_id} assigned new host_id={self.host}")
         self.sync_host()
     
+
+    def kill(self):
+        """
+        Terminate the thread and remove it from SPACE.
+        
+        This method is called when a "!kill" command is received.
+        It removes the canvas from the global registry and sets
+        the alive flag to False, which will cause the thread to exit.
+        """  
+        with SPACE_LOCK:
+            SPACE.pop(self.canvas_id, None)
+        self.alive = False
+        self.logger.info(f"Kill command received: canvas_id={self.canvas_id} removed from SPACE.")
+
     
     def set_origin(self, new_origin: tuple):
         """
@@ -217,7 +212,19 @@ class CANVA_THREAD():
         if self.host:
             self.sync_host()  # Rebuild host_ref_canvas and overlay
 
-        #print(f"[{self.canvas_id}] 🎯 Origin set to {self.origin_yx}")
+        self.logger.info(f"Origin updated: canvas_id={self.canvas_id}, new_origin={self.origin_yx}")
+
+    
+    def clear_canvas(self):
+        """
+        Reset the canvas buffer to its default state.
+        
+        Regenerates the canvas using current state variables (ID, owner, dimensions,
+        fill value, visibility). This effectively clears all content while maintaining
+        the canvas configuration.
+        """
+        self.canvas = ASCII_SCREEN.create_canvas(self.canvas_id, self.owner, self.height, self.width, self.fill_value, self.visible)
+        self.logger.info(f"Canvas regenerated: id={self.canvas_id}, size=({self.height}x{self.width}), fill='{self.fill_value}', visible={self.visible}")
 
     
     def resize_canvas(self, new_height: int, new_width: int):
@@ -242,7 +249,8 @@ class CANVA_THREAD():
             self.visible
         )
         self.sync_to_space()
-        #print(f"[{self.canvas_id}] 📏 Canvas resized to {self.height}x{self.width}")
+        self.logger.info(f"Canvas resized: canvas_id={self.canvas_id}, new_size=({self.height}x{self.width})")
+
 
         if self.host:
             self.sync_host()
@@ -270,8 +278,8 @@ class CANVA_THREAD():
             self.visible
         )
 
-       #print(f"[{self.canvas_id}] 🪄 Fill value set to '{self.fill_value}' and canvas refreshed.")
-
+        self.logger.info(f"Fill value updated: canvas_id={self.canvas_id}, new_fill='{self.fill_value}'")
+        
         if self.host:
             self.sync_host()
     
@@ -318,16 +326,16 @@ class CANVA_THREAD():
 
         elif command == "write":
             written = ASCII_SCREEN.zip_and_write(self.canvas, chart, metadata)
-            #print(f"[{self.canvas_id}] ✍️ Wrote {written} cells.") # Debug
+            self.logger.info(f"Write command: canvas_id={self.canvas_id}, cells_written={written}")
 
 
         elif command == "forward_to":
             written = ASCII_SCREEN.zip_and_write(self.canvas, chart, metadata)
-            #print(f"[{self.canvas_id}] ✍️ Wrote {written} cells.")
+            self.logger.info(f"Write command: canvas_id={self.canvas_id}, cells_written={written}")
 
             target_id = args_package.get("canvas_id")
             if target_id == self.canvas_id:
-                #print(f"[{self.canvas_id}] 🛑 Packet reached target canvas. Not forwarding further.")
+                self.logger.info(f"forward_to: halted, canvas_id={self.canvas_id} is target")
                 return
 
             host_check = self.check_host()
@@ -361,13 +369,13 @@ class CANVA_THREAD():
                         host_queue = SPACE.get(self.host).get("queue")
                     if host_queue:
                         host_queue.put(packet)
-                        #print(f"[{self.canvas_id}] 🚀 Forwarded {len(forward_metadata)} cells to host '{self.host}'")
+                        self.logger.info(f"forward_to: canvas_id={self.canvas_id}, target_id={target_id}, cells_forwarded={len(forward_metadata)}")
                         
                                
         elif command == "auto_forward":
             # First, write the content to the local canvas
             written = ASCII_SCREEN.zip_and_write(self.canvas, chart, metadata)
-            #print(f"[{self.canvas_id}] ✍️ Wrote {written} cells.")
+            self.logger.info(f"Write command: canvas_id={self.canvas_id}, cells_written={written}")
 
             host_check = self.check_host()
             # Only forward if we successfully wrote something and have a host
@@ -402,9 +410,9 @@ class CANVA_THREAD():
                         host_queue = SPACE.get(self.host).get("queue")
                     if host_queue:
                         host_queue.put(packet)
-                        #print(f"[{self.canvas_id}] 🚀 Forwarded {len(forward_metadata)} cells to host '{self.host}'")
-              
-                    
+                        self.logger.info(f"auto_forward: canvas_id={self.canvas_id}, cells_forwarded={len(forward_metadata)}")
+
+                  
         elif command ==  "clear":
             self.clear_canvas()
         
@@ -429,7 +437,7 @@ class CANVA_THREAD():
             self.kill()
             
         else:
-            #print(f"[{self.canvas_id}] ⚠️ Unknown command: {command}")
+            self.logger.info(f"unknown_command: canvas_id={self.canvas_id}, cmd={command}")
             return
         
     def run(self):

@@ -2,66 +2,6 @@ import logging
 from sigilengine.space import LOGGER_SPACE
 from sigilengine.space import LOGGER_LOCK
 
-"""
-
-TODO add all the command packet stuff to the packet creator
-TODO also handle them in the canva_thread parser
-TODO 
-
-🚀 Logger Plan Overview
-
-Flow:
-Canvas → logger.log(level, message + metadata) → handler.emit(record) → prebuffer (batch size N) → central queue → filtering → storage → file tailing
-
-Components:
-- Canvas logger:
-    - logger = logging.getLogger(canvas_id)
-    - registers itself into logger space (shared registry)
-    - logging is auto-enabled when a logger is registered; 
-      if no logger is registered, logging is effectively disabled
-    - adds metadata: owner, canvas_id
-    - batches messages into prebuffer to reduce spam
-
-- Custom handler:
-    - MyMonsterHandler
-    - receives record → pushes into prebuffer
-
-- Prebuffer:
-    - holds raw records temporarily
-    - batch size configurable (e.g., 10 messages)
-    - flushes batch into central queue
-
-- Central handler:
-    - reads from central queue
-    - applies:
-        - per-level discard / sample rules (info, warning, error)
-    - manages:
-        - max buffer size
-        - file write frequency
-        - file rotation (max file size, retention count)
-    - **no live render pipeline — file tailing only**
-
-- Storage:
-    - writes logs to file every X messages or seconds
-    - rotates file when max size is reached
-
-- File tailing:
-    - users can monitor logs with external tools (e.g., `tail -f log.txt`)
-    - supports filtering on canvas_id, owner (via log metadata)
-
-Control options:
-- Enable/disable logging dynamically (via logger space presence)
-- Per-level sample rates
-- Max queue / buffer sizes
-- Max log file size & rotation count
-
-✨ Notes:
-- Canvas → minimal logic: batching + metadata only
-- Prebuffer → smooths bursts, sends batches to central queue
-- Central handler → handles filtering, rotation, file writing
-- External tailing → live monitoring via file tools only
-"""
-
 
 class MyMonsterHandler(logging.Handler):
     """
