@@ -14,8 +14,6 @@ class LOGHUB():
         """
         Missing command_queue handling currently
         """
-        
-        
         # Alive flag
         self.alive = True
         # Similar to the canvases, loggers can be plenty,
@@ -46,10 +44,10 @@ class LOGHUB():
         )
         
         # Format the log records and add handler to the minilogger
-        #formatter = logging.Formatter(fmt='%(asctime)s %(levelname) [%(owner)s:%(canvas_id)s] %(message)s')
+        formatter = logging.Formatter('%(asctime)s  | %(levelname)s | %(owner)s | %(entity_id)s | %(message)s')
         
         #TEST FORMATTER! MISSING OWNER AND CANVA_ID
-        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        #formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
         self.minilogger.addHandler(self.rotating_handler)
         self.rotating_handler.setFormatter(formatter)

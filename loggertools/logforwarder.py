@@ -9,15 +9,15 @@ class MyMonsterHandler(logging.Handler):
     Prebuffer will send records in batches to the central logging queue
     Anything above warning --> straight to the central logging queue
     """
-    def __init__(self, buffer, canva_logger, loghub):
+    def __init__(self, buffer, logforwarder, loghub):
         super().__init__()
         self.log_buffer = buffer
         # We need this reference to dynamicly use the enabled flag from the canva_logger
-        self.canva_logger = canva_logger
+        self.logforwarder = logforwarder
         self.loghub = loghub
         
     def emit(self, log_record):
-        if self.canva_logger.logging_enabled:
+        if self.logforwarder.logging_enabled:
             if log_record.levelno <= 30:
                 self.log_buffer.append(log_record)
             else:
@@ -30,7 +30,7 @@ class MyMonsterHandler(logging.Handler):
             return
 
 
-class CANVA_LOGGER():
+class LOGFORWARDER():
     """
     This logger is canvas-native each canvas will have its own little logger
     Logger wrapper that attaches the owner metadata automaticly
@@ -38,11 +38,11 @@ class CANVA_LOGGER():
     The same logger will be usable in the main structure its not only canvas native
     Will have to rename the thing to something more generic XD
     """
-    def __init__(self, canvas_id, owner, loghub, batch_size=10):
+    def __init__(self, loghub, entity_id="unset", owner="unset", batch_size=10):
         
         # Extra metadata for teh records
         self.owner = owner
-        self.canvas_id = canvas_id
+        self.entity_id = entity_id # The "entity" being logged
         
         # Every buffer flush the alive flag of the central logger is checked
         # If its false we will set logging to false and make the emit function early return 
@@ -59,7 +59,7 @@ class CANVA_LOGGER():
         self.loghub = loghub
         
         # Setup the logger and handler/s
-        self.logger = logging.getLogger(canvas_id) # Logger channel
+        self.logger = logging.getLogger(entity_id) # Logger channel
         self.handler = MyMonsterHandler(self.log_buffer, self, loghub)
 
 
@@ -100,13 +100,13 @@ class CANVA_LOGGER():
                 self.logging_enabled = False
             
     def info(self, msg):
-        self.logger.info(msg, extra={"owner": self.owner, "canvas_id": self.canvas_id})
+        self.logger.info(msg, extra={"owner": self.owner, "entity_id": self.entity_id})
 
     def warning(self, msg):
-        self.logger.warning(msg, extra={"owner": self.owner, "canvas_id": self.canvas_id})
+        self.logger.warning(msg, extra={"owner": self.owner, "entity_id": self.entity_id})
 
     def error(self, msg):
-        self.logger.error(msg, extra={"owner": self.owner, "canvas_id": self.canvas_id})
+        self.logger.error(msg, extra={"owner": self.owner, "entity_id": self.entity_id})
 
     def critical(self, msg):
-        self.logger.critical(msg, extra={"owner": self.owner, "canvas_id": self.canvas_id})
+        self.logger.critical(msg, extra={"owner": self.owner, "entity_id": self.entity_id})

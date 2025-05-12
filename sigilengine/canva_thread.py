@@ -3,7 +3,7 @@ from utilities.timermodule import TIMER
 from sigilengine.space import SPACE
 from sigilengine.space import SPACE_LOCK
 from sigilengine.ascii_screen import ASCII_SCREEN
-from loggertools.canva_logger import CANVA_LOGGER
+from loggertools.logforwarder import LOGFORWARDER
 
 
 class CANVA_THREAD():
@@ -77,7 +77,7 @@ class CANVA_THREAD():
         # If no handler is set or if it doesnt exist, logging will be disabled
         self.loghub = loghub
         # Logger module, the default prebuffer size for logger records is 10
-        self.logger = CANVA_LOGGER(self.canvas_id, self.owner, self.loghub)
+        self.logger = LOGFORWARDER(self.loghub, entity_id=self.canvas_id, owner=self.owner)
         # Seconds interval the logger_buffer lenght will be checked 
         
         # Timer module
@@ -89,6 +89,20 @@ class CANVA_THREAD():
 
     #############################################################
     
+    
+    def kill(self):
+        """
+        Terminate the thread and remove it from SPACE.
+        
+        This method is called when a "!kill" command is received.
+        It removes the canvas from the global registry and sets
+        the alive flag to False, which will cause the thread to exit.
+        """  
+        with SPACE_LOCK:
+            SPACE.pop(self.canvas_id, None)
+        self.alive = False
+        self.logger.info(f"Kill command received: canvas_id={self.canvas_id} removed from SPACE.")
+
     
     def sync_to_space(self):
         """
@@ -180,20 +194,6 @@ class CANVA_THREAD():
         self.sync_host()
     
 
-    def kill(self):
-        """
-        Terminate the thread and remove it from SPACE.
-        
-        This method is called when a "!kill" command is received.
-        It removes the canvas from the global registry and sets
-        the alive flag to False, which will cause the thread to exit.
-        """  
-        with SPACE_LOCK:
-            SPACE.pop(self.canvas_id, None)
-        self.alive = False
-        self.logger.info(f"Kill command received: canvas_id={self.canvas_id} removed from SPACE.")
-
-    
     def set_origin(self, new_origin: tuple):
         """
         Update the origin position of this canvas on its host.

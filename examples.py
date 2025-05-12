@@ -21,8 +21,8 @@ from sigilengine.space import SPACE_LOCK
 from sigilengine.ascii_screen import ASCII_SCREEN
 from sigilengine.canva_thread import CANVA_THREAD
 from sigilengine.packet_creator import PACKET_CREATOR
-from loggertools.canva_logger import CANVA_LOGGER
-from loggertools.central_logger import LOGHUB
+from loggertools.logforwarder import LOGFORWARDER
+from loggertools.loghub import LOGHUB
 
 
 class EXAMPLES():
@@ -515,6 +515,6 @@ class EXAMPLES():
 
 try:
     test = EXAMPLES()
-    test.resize_and_fillvalue_test()
+    test.run_random_test()
 finally:
     test.shutdown()

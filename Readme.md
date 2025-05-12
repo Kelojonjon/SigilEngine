@@ -22,7 +22,14 @@ Future plans (depending on motivation of the hobbyist :D):
 - Proper logging
 - Styling options
 - Handle visibility, and possibly "writable" metadata for individual cells
-- ANSI screen refreshing curses style
+- Rendering via pygame for simulations
+
+Things currently brewing / Upcoming (also depending on the motivation :D):
+
+- Centralized logging system with batching, prebuffers, and metadata
+- Event-based timer module for scheduled triggers
+- Refactoring of the code (especially the canva_thread parser :D)
+
 
 The below readme is generated using AI, if something is  unclear, you should find the answer from the codebase!
 
