@@ -5,21 +5,31 @@ from sigilengine.space import LOGGER_LOCK
 
 class MyMonsterHandler(logging.Handler):
     """
-    Custom handler that will append the records to the prebuffer
-    Prebuffer will send records in batches to the central logging queue
-    Anything above warning --> straight to the central logging queue
+    Custom logging handler for the LOGFORWARDER
+    
+    References LOGFORWARDER state, with its attributes
+    
+    Appends logrecords below levelno 40 to a local logbuffer
+    Above levelno 40 logrecords are sent straight to a loghub queue 
+    
+    If no loghub is not connected to the logforwarder logging is halted
+    If a loghub is found, logging will resume automaticly
     """
     def __init__(self, buffer, logforwarder, loghub):
         super().__init__()
-        self.log_buffer = buffer
-        # We need this reference to dynamicly use the enabled flag from the canva_logger
+        
+        # References for logforwarder instance, loghub, and the log_buffer
         self.logforwarder = logforwarder
         self.loghub = loghub
+        self.log_buffer = buffer
         
     def emit(self, log_record):
+        
         if self.logforwarder.logging_enabled:
-            if log_record.levelno <= 30:
+            # Handle records under levelno 40
+            if log_record.levelno < 40:
                 self.log_buffer.append(log_record)
+            # Handle records above levelno 40        
             else:
                 with LOGGER_LOCK:
                     try:
@@ -32,11 +42,17 @@ class MyMonsterHandler(logging.Handler):
 
 class LOGFORWARDER():
     """
-    This logger is canvas-native each canvas will have its own little logger
-    Logger wrapper that attaches the owner metadata automaticly
-    Has functions to check the buffer size
-    The same logger will be usable in the main structure its not only canvas native
-    Will have to rename the thing to something more generic XD
+    Allows creating logrecords with extra metada using custom logger functions
+    Handles routing the logrecords to LOGHUB module
+    
+    If a LOGHUB is set, automaticly detects if LOGHUB is running and reachable trough LOGGER_SPACE
+    If no valid LOGHUB exists, logging is automaticly halted
+    
+    Uses buffered forwarding with anything < levelno 40
+    Batch sizes are controllable (From the state variable at the moment only)
+    Logrecords with higher than 40 levelno, skip this buffer
+    
+    Buffer flushing happens by placing the check_log_buffer function in a external loop  
     """
     def __init__(self, loghub, entity_id="unset", owner="unset", batch_size=10):
         
@@ -81,6 +97,7 @@ class LOGFORWARDER():
         else:
             self.error("Logger batch size must be a integer and above 0")
     
+    
     def check_log_buffer(self):
         """
         Check if central logger is alive and flush batch if needed.
@@ -98,7 +115,9 @@ class LOGFORWARDER():
                         return
             else:
                 self.logging_enabled = False
-            
+           
+           
+    # Custom 
     def info(self, msg):
         self.logger.info(msg, extra={"owner": self.owner, "entity_id": self.entity_id})
 

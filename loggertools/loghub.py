@@ -101,7 +101,7 @@ class LOGHUB():
     
     def filter(self, record):
         """
-        Appliess the filtering rules to a single logrecord
+        Applies the filtering rules to a single logrecord
         """
         levelno = record.levelno
         
@@ -119,26 +119,16 @@ class LOGHUB():
         
         return None
             
-        
-    def write_buffered_records(self):
-        """
-        Flushes the logrecords from the filebuffer, and writes them to a file
-        """
-        if len(self.file_buffer) > 0:
-            for record in self.file_buffer:
-                self.minilogger.handle(record)
-            self.file_buffer.clear()
-            
            
     def handle_my_record(self, record):
         """
         Either handles important logrecords ASAP, or appends them to the I/O file_buffer
         """
         
-        levelno = record.levelno
-        
         if record == None:
             return
+
+        levelno = record.levelno
         
         # Handle high priority without buffer        
         if levelno >= 40:
@@ -150,9 +140,9 @@ class LOGHUB():
               
     def gatekeeper(self, item):
         """
-        Entry point for all incoming records.
-        Handles the flattening, if a item is a list
-        Calls handle_my_record for all the records.
+        Entry point for all incoming logrecords.
+        Handles the flattening, if logrecords come in a list
+        Calls handle_my_record every logrecord.
         """
         # If item is a list, flatten it down, and pass forward
         if isinstance(item, list):
@@ -164,6 +154,16 @@ class LOGHUB():
             filtered_item = self.filter(item)
             self.handle_my_record(filtered_item)
                 
+            
+    def write_buffered_records(self):
+        """
+        Flushes all records from the file buffer and writes them to file.
+        """
+        if len(self.file_buffer) > 0:
+            for record in self.file_buffer:
+                self.minilogger.handle(record)
+            self.file_buffer.clear()
+                    
             
     def run(self):
         """
