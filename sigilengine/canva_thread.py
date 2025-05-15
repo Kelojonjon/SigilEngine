@@ -50,10 +50,12 @@ class CANVA_THREAD():
         # Alive flag for the run loop
         self.alive = True
 
+        # Canvas name, "process" name and host_canvas
         self.canvas_id = canvas_id
         self.owner = owner
         self.host = host
- 
+        
+        # Placement on host canvas, own dimensions, fillval and visibility
         self.origin_yx = origin_yx
         self.height = height
         self.width = width

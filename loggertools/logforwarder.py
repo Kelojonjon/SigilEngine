@@ -56,42 +56,36 @@ class LOGFORWARDER():
     """
     def __init__(self, loghub, entity_id="unset", owner="unset", batch_size=10):
         
-        # Extra metadata for teh records
-        self.owner = owner
-        self.entity_id = entity_id # The "entity" being logged
-        
-        # Every buffer flush the alive flag of the central logger is checked
-        # If its false we will set logging to false and make the emit function early return 
-        # When re-enabling the central logging, the ocasiaonal check_log_buffer will make sure
-        # the logging will be enabled again
+        # LOGFORWARDER targets this loghubs queue
+        self.loghub = loghub
+        # False if no valid LOGHUB set
         self.logging_enabled = False
         
-        # We will send the logs the central queue in batches to limit spam
-        # Messages above a certain level will skip this buffer
+        # Logbuffer and its batchsize
         self.log_buffer = []
         self.batch_size = batch_size
 
-        # Logs will be sent here to be processed, could later allow acting as a forwarder to other hubs
-        self.loghub = loghub
-        
         # Setup the logger and handler/s
-        self.logger = logging.getLogger(entity_id) # Logger channel
-        self.handler = MyMonsterHandler(self.log_buffer, self, loghub)
-
-
-        # Add handlers to the logger
+        self.logger = logging.getLogger(entity_id)
+        self.handler = MyMonsterHandler(self.log_buffer, self, loghub) # CUSTOM handler
         self.logger.addHandler(self.handler)
-
-        # Set the levels to pass everything trough DEBUG ---> CRITICAL
         self.logger.setLevel(logging.DEBUG)
         self.handler.setLevel(logging.DEBUG)
-
+        
+        # Extra metadata for extra identifying
+        self.owner = owner
+        self.entity_id = entity_id # Choose a name for the logger
+        
         
     def log_batch_size(self, batch_size: int):
         """
-        Set a new batch size, default on init is 10
+        Update the batch size used when flushing the log buffer.
+
+        Only accepts integers greater than zero.
+        If the input is invalid, logs an error using the internal logger.
         """
-        # TODO handle the checking in the create packet later 
+        
+        # input validation to check for int and > 0
         if isinstance(batch_size, int) and batch_size > 0:
             self.batch_size = batch_size
         else:
@@ -100,24 +94,29 @@ class LOGFORWARDER():
     
     def check_log_buffer(self):
         """
-        Check if central logger is alive and flush batch if needed.
+        Flushes buffered logs to LOGHUB if reachable.
+
+        If loghub exists and buffer has enough records,
+        forwards them to hub_log_queue. Disables logging
+        if hub is missing. Errors are silently ignored.
         """
         with LOGGER_LOCK:
+            
             if LOGGER_SPACE.get(self.loghub, False):
-                self.logging_enabled = True
+                # If LOGHUB is found enable logging
+                self.logging_enabled = True    
                 if len(self.log_buffer) >= self.batch_size:
-                    # Use try so if the central_log_queue is full or the central is down
-                    # it doesnt crash the canva_thread
                     try:
                         LOGGER_SPACE[self.loghub]["hub_log_queue"].put(self.log_buffer.copy())
                         self.log_buffer.clear()
                     except Exception:
                         return
+            # If no loghub  is found disable logging
             else:
                 self.logging_enabled = False
            
            
-    # Custom 
+    # Custom "print" functions that attaches "owner" and "entity_id" fields and sends them to be logged
     def info(self, msg):
         self.logger.info(msg, extra={"owner": self.owner, "entity_id": self.entity_id})
 
